@@ -11,3 +11,8 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+/* 取消滚动条兼容edge/chorm */
+::-webkit-scrollbar {
+  width: 0;
+}
+
