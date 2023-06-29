@@ -9,7 +9,7 @@ const { Dragger } = Upload;
 const props: UploadProps = {
     name: 'file',
     multiple: false,
-    action: '/Detection/upload',
+    action: '/api/upload_file',
     onChange(info) {
       const { status,response } = info.file
       if (status !== 'uploading') {
