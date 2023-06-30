@@ -55,3 +55,6 @@
     margin: auto;
     margin-top: 20px;
 }
+.hidephoto{
+    display: none;
+}

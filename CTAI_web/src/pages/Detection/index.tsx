@@ -18,7 +18,7 @@ const Detection:FC = ()=>{
         setCheck1(false)
         setCheck2(true)
     }
-    const [istrained,setIstrained] = useState(true)
+    const [istrained,setIstrained] = useState(false)
     const props: UploadProps = {
         name: 'file',
         multiple: true,
@@ -47,7 +47,7 @@ const Detection:FC = ()=>{
             format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
         }
     }
-    const [istested,setIstested] = useState(true)
+    const [istested,setIstested] = useState(false)
     const propss: UploadProps = {
         name: 'file',
         multiple: true,
@@ -124,7 +124,7 @@ const Detection:FC = ()=>{
             window.URL.revokeObjectURL(url);
         })
     }
-    const [src,setSrc] = useState("./about-bg.jpg")
+    const [src,setSrc] = useState("")
     const previewphoto = ()=>{
         console.log(11111)
         fetch('/tmp/test_src/类别分析.png')
