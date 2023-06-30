@@ -58,12 +58,14 @@ const Detection:FC = ()=>{
             console.log(info.file, info.fileList)
             message.success(`测试成功!`)
             setIstrained(true)
+            setUrl(response.image_url)
           }
           if (status === 'done') {
             message.success(`${info.file.name} file uploaded successfully.`)
             // 处理
             message.success(`测试成功!`)
             setIstrained(true)
+            setUrl(response.image_url)
           } 
         },
         onDrop(e) {
@@ -78,6 +80,7 @@ const Detection:FC = ()=>{
             format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
         }
     }
+    const [url,setUrl] = useState("")
     const downloadFile = ()=> {
         // 发送GET请求到服务器端下载文件
         // console.log(1)
@@ -196,7 +199,7 @@ const Detection:FC = ()=>{
                                                     </p>
                                                     <p className="ant-upload-text">点击或拖拽上传文件并测试</p>
                                                 </Dragger>
-                                                <div style={istrained?{display:'flex'}:{display:'none'}}>
+                                                <div style={istested?{display:'flex'}:{display:'none'}}>
                                                     <button className="download" onClick={downloadFile2}>点击下载分类结果</button>
                                                     <button className="download" onClick={previewphoto}>点击查看分类图片</button>
                                                 </div>
