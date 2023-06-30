@@ -17,3 +17,41 @@
 .upload-file>input{
     opacity: 0;
 }
+/* .download{
+    cursor: pointer;
+    width: fit-content;
+    font-size: 20px;
+    margin: auto;
+    border: 1px solid blue;
+    background-color: blue;
+} */
+.download {
+    cursor: pointer;
+    border: none;
+    margin: auto;
+    margin-top: 5%;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    background-color: #3d93f5;
+    color: #ffffff;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.download:hover {
+    background-color: #0c77f0;
+    color: #292929;
+}
+
+.download:active {
+    background-color: #328df4;
+}
+.showphoto{
+    display: flex;
+    width: 520px;
+    margin: auto;
+    margin-top: 20px;
+}

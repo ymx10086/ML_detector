@@ -426,6 +426,7 @@ a {
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-attachment: fixed;
+	padding-top: 5%;
 }
 
 #blog .section-heading {
