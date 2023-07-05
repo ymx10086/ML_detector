@@ -59,7 +59,7 @@ const Detection:FC = ()=>{
             format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
         }
     }
-    const [istested,setIstested] = useState(true)
+    const [istested,setIstested] = useState(false)
     const propss: UploadProps = {
         name: 'file',
         multiple: true,
