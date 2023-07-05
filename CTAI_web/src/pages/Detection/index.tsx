@@ -4,9 +4,21 @@ import { Link } from "react-router-dom"
 import { InboxOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 import { message, Upload } from 'antd'
+import * as echarts from 'echarts'
+import 'echarts/lib/chart/bar'
+import 'echarts/lib/component/tooltip'
+import 'echarts/lib/component/title'
+import 'echarts/lib/component/legend'
+import 'echarts/lib/component/markPoint'
+import axios from "axios"
+import ReactEcharts from 'echarts-for-react'
 import './index.css'
 const { Dragger } = Upload
-
+interface data {
+    name:string,
+    value:number
+}
+const initdata:data[] = []
 const Detection:FC = ()=>{
     const [check1,setCheck1] = useState(true)
     const [check2,setCheck2] = useState(false)
@@ -47,7 +59,7 @@ const Detection:FC = ()=>{
             format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
         }
     }
-    const [istested,setIstested] = useState(false)
+    const [istested,setIstested] = useState(true)
     const propss: UploadProps = {
         name: 'file',
         multiple: true,
@@ -57,14 +69,14 @@ const Detection:FC = ()=>{
           if (status !== 'uploading') {
             console.log(info.file, info.fileList)
             message.success(`测试成功!`)
-            setIstrained(true)
+            setIstested(true)
             setUrl(response.image_url)
           }
           if (status === 'done') {
             message.success(`${info.file.name} file uploaded successfully.`)
             // 处理
             message.success(`测试成功!`)
-            setIstrained(true)
+            setIstested(true)
             setUrl(response.image_url)
           } 
         },
@@ -127,17 +139,134 @@ const Detection:FC = ()=>{
             window.URL.revokeObjectURL(url);
         })
     }
-    const [src,setSrc] = useState("")
+    const [datas,setDatas] = useState(initdata)
+    const getOption = ()=>{
+        // todo 处理数据
+        let option = {
+            title: {
+                text: '分类结果饼状图',
+                x: 'left'
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)"
+            },
+            legend: {
+                orient: 'vertical',
+                top: 20,
+                right: 5,
+                data: ['1','2','3','4','5','6']
+            },
+            series : [
+                {
+                    name:'分类占比',
+                    type:'pie',
+                    radius: ['30%', '80%'],
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'insideRight',
+                            formatter: '{c}%'
+                        }
+                    },
+                    data:datas,
+                }
+            ]
+        }
+        return option
+    }
+    const getOptions = ()=>{
+        // 设置绘图
+        let option = {
+            title: {
+                text: '分类结果柱状图'
+            },
+            tooltip:{
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data:[1,2,3,4,5,6],
+                axisTick:{
+                    alignWithlabel:true
+                },
+                axisLabel: {
+                    interval:0,// 代表显示所有x轴标签显示
+                }
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series : [
+                {
+                    name:'数量',
+                    type:'bar',
+                    barWidth: '50%',
+                    data: datas,
+                    itemStyle:{
+                        normal:{
+                            color: new echarts.graphic.LinearGradient(
+                                0, 1, 0, 0, //4个参数用于配置渐变色的起止位置, 这4个参数依次对应右/下/左/上四个方位. 而0 1 0 0则代表渐变色从正下方开始
+                                [
+                                    {offset: 0, color: '#a8edea'},
+                                    {offset: 0.5, color: '#fed6e3'},
+                                ] //数组, 用于配置颜色的渐变过程. 每一项为一个对象, 包含offset和color两个参数. offset的范围是0 ~ 1, 用于表示柱状图的位置
+                            )
+                        }
+                    }
+                }
+            ]
+        }
+        return option
+    }
+    const [show,setShow] = useState(false)
     const previewphoto = ()=>{
         console.log(11111)
-        fetch('/tmp/test_src/类别分析.png')
-            .then(response => response.blob())
-            .then(blob => {
-                // 将获取的图片数据设置为<img>标签的src属性
-                const img = document.getElementById('preview-image');
-                setSrc(URL.createObjectURL(blob))
-         })
+        // 请求数据，绘制图像
+        // setTimeout(() => {
+        //     const data = [
+        //         {
+        //             name:'1',
+        //             value:20
+        //         },
+        //         {
+        //             name:'2',
+        //             value:30
+        //         },
+        //         {
+        //             name:'3',
+        //             value:40
+        //         },
+        //         {
+        //             name:'4',
+        //             value:50
+        //         },
+        //         {
+        //             name:'5',
+        //             value:50
+        //         },
+        //         {
+        //             name:'6',
+        //             value:50
+        //         }
+        // ]
+        // setDatas(data)
+        // setShow(true)
+        // }, 1000);
+        // axios.get('/xxx')
+        // .then((res)=>{
+        //     // 获得数据
+        //     setShow(true)
+        // })
+        // fetch('/tmp/test_src/类别分析.png')
+        //     .then(response => response.blob())
+        //     .then(blob => {
+        //         // 将获取的图片数据设置为<img>标签的src属性
+        //         const img = document.getElementById('preview-image');
+        //         setSrc(URL.createObjectURL(blob))
+        //  })
     }
+
     return (
         <>
             <div className={"header active"} >
@@ -157,11 +286,11 @@ const Detection:FC = ()=>{
                     </nav>
                 </div>
             </div>
-            <div className="tabs-content" id="blog">
+            <div className="tabs-content" id="blog" style={{minHeight:'100vh'}}>
                     <div className="container">
                         <div className="row">
                             <div className="wrapper" style={{display:'flex'}}>
-                                <div className="col-md-4" style={{width:'30%'}}>
+                                <div className="col-md-4" style={{width:'30%',position:'fixed'}}>
                                     <div className="section-heading">
                                         <h4 style={{marginLeft:'5%'}}>我们的产品</h4>
                                         <div className="line-dec" style={{marginLeft:'5%'}}></div>
@@ -172,7 +301,7 @@ const Detection:FC = ()=>{
                                         </ul>
                                     </div>
                                 </div>
-                                <div className="col-md-8" style={{width:'60%',margin:'0 5%'}}>
+                                <div className="col-md-8" style={{width:'60%',margin:'0 5% 0 40%',}}>
                                     <section id="first-tab-group" className="tabgroup">
                                         <div id="tab1" style={check1?{display:''}:{display:'none'}}>
                                             <div className="text-content">
@@ -203,9 +332,12 @@ const Detection:FC = ()=>{
                                                     <button className="download" onClick={downloadFile2}>点击下载分类结果</button>
                                                     <button className="download" onClick={previewphoto}>点击查看分类图片</button>
                                                 </div>
-                                                <div>
+                                                {/* <div>
                                                     <img className={src === ""?"hidephoto":"showphoto"} src={src} alt="Preview Image" />
-                                                </div>
+                                                </div> */}
+                                                {/* <div ref={chartRef} style={{ width: '100%', height: '400px' }} /> */}
+                                                <ReactEcharts style={show?{display:'flex',marginTop:'6%'}:{display:'none'}} theme={"light"} option={getOption()}/>
+                                                <ReactEcharts style={show?{display:'flex',marginTop:'6%'}:{display:'none'}} theme={"light"} option={getOptions()}/>
                                             </div>
                                         </div>
                                     </section>
@@ -213,7 +345,7 @@ const Detection:FC = ()=>{
                             </div>
                         </div>
                     </div>
-                </div>
+            </div>
         </>
     )
 }
