@@ -4,9 +4,21 @@ import { Link } from "react-router-dom"
 import { InboxOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 import { message, Upload } from 'antd'
+import * as echarts from 'echarts'
+import 'echarts/lib/chart/bar'
+import 'echarts/lib/component/tooltip'
+import 'echarts/lib/component/title'
+import 'echarts/lib/component/legend'
+import 'echarts/lib/component/markPoint'
+import axios from "axios"
+import ReactEcharts from 'echarts-for-react'
 import './index.css'
 const { Dragger } = Upload
-
+interface data {
+    name:string,
+    value:number
+}
+const initdata:data[] = []
 const Detection:FC = ()=>{
     const [check1,setCheck1] = useState(true)
     const [check2,setCheck2] = useState(false)
@@ -18,7 +30,7 @@ const Detection:FC = ()=>{
         setCheck1(false)
         setCheck2(true)
     }
-    const [istrained,setIstrained] = useState(false)
+    // const [istrained,setIstrained] = useState(false)
     const props: UploadProps = {
         name: 'file',
         multiple: true,
@@ -28,11 +40,11 @@ const Detection:FC = ()=>{
           if (status !== 'uploading') {
             console.log(info.file, info.fileList)
             message.success(`训练成功!`)
-            setIstrained(true)
+            // setIstrained(true)
           }
           if (status === 'done') {
             message.success(`训练成功!`)
-            setIstrained(true)
+            // setIstrained(true)
           }
         },
         onDrop(e) {
@@ -57,15 +69,15 @@ const Detection:FC = ()=>{
           if (status !== 'uploading') {
             console.log(info.file, info.fileList)
             message.success(`测试成功!`)
-            setIstrained(true)
-            setUrl(response.image_url)
+            setIstested(true)
+            // setUrl(response.image_url)
           }
           if (status === 'done') {
             message.success(`${info.file.name} file uploaded successfully.`)
             // 处理
             message.success(`测试成功!`)
-            setIstrained(true)
-            setUrl(response.image_url)
+            setIstested(true)
+            // setUrl(response.image_url)
           } 
         },
         onDrop(e) {
@@ -80,31 +92,31 @@ const Detection:FC = ()=>{
             format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
         }
     }
-    const [url,setUrl] = useState("")
+    // const [url,setUrl] = useState("")
+    // const downloadFile = ()=> {
+    //     // 发送GET请求到服务器端下载文件
+    //     // console.log(1)
+    //     fetch('/download')
+    //     .then(response => response.blob())
+    //     .then(blob => {
+    //         // 创建一个临时的URL，用于下载文件
+    //         const url = window.URL.createObjectURL(blob);
+            
+    //         // 创建一个a标签，并设置其href属性为临时URL
+    //         const link = document.createElement('a');
+    //         link.href = url;
+            
+    //         // 设置下载的文件名
+    //         link.download = 'model_param.pth';
+            
+    //         // 模拟点击a标签来触发文件下载
+    //         link.click();
+            
+    //         // 释放临时URL资源
+    //         window.URL.revokeObjectURL(url);
+    //     })
+    // }
     const downloadFile = ()=> {
-        // 发送GET请求到服务器端下载文件
-        // console.log(1)
-        fetch('/download')
-        .then(response => response.blob())
-        .then(blob => {
-            // 创建一个临时的URL，用于下载文件
-            const url = window.URL.createObjectURL(blob);
-            
-            // 创建一个a标签，并设置其href属性为临时URL
-            const link = document.createElement('a');
-            link.href = url;
-            
-            // 设置下载的文件名
-            link.download = 'model_param.pth';
-            
-            // 模拟点击a标签来触发文件下载
-            link.click();
-            
-            // 释放临时URL资源
-            window.URL.revokeObjectURL(url);
-        })
-    }
-    const downloadFile2 = ()=> {
         // 发送GET请求到服务器端下载文件
         // console.log(1)
         fetch('/test1')
@@ -118,7 +130,7 @@ const Detection:FC = ()=>{
             link.href = url;
             
             // 设置下载的文件名
-            link.download = 'model_param.pth';
+            link.download = 'submit.json';
             
             // 模拟点击a标签来触发文件下载
             link.click();
@@ -127,17 +139,130 @@ const Detection:FC = ()=>{
             window.URL.revokeObjectURL(url);
         })
     }
-    const [src,setSrc] = useState("")
+    const [datas,setDatas] = useState(initdata)
+    const getOption = ()=>{
+        // todo 处理数据
+        let option = {
+            title: {
+                text: '分类结果饼状图',
+                x: 'left'
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)"
+            },
+            legend: {
+                orient: 'vertical',
+                top: 20,
+                right: 5,
+                data: ['label0','label1','label2','label3','label4','label5']
+            },
+            series : [
+                {
+                    name:'分类占比',
+                    type:'pie',
+                    radius: ['30%', '80%'],
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'insideRight',
+                            formatter: '{d}%'
+                        }
+                    },
+                    data:datas,
+                }
+            ]
+        }
+        return option
+    }
+    const getOptions = ()=>{
+        // 设置绘图
+        let option = {
+            title: {
+                text: '分类结果柱状图'
+            },
+            tooltip:{
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data:['label0','label1','label2','label3','label4','label5'],
+                axisTick:{
+                    alignWithlabel:true
+                },
+                axisLabel: {
+                    interval:0,// 代表显示所有x轴标签显示
+                }
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series : [
+                {
+                    name:'数量',
+                    type:'bar',
+                    barWidth: '50%',
+                    data: datas,
+                    itemStyle:{
+                        normal:{
+                            color: new echarts.graphic.LinearGradient(
+                                0, 1, 0, 0, //4个参数用于配置渐变色的起止位置, 这4个参数依次对应右/下/左/上四个方位. 而0 1 0 0则代表渐变色从正下方开始
+                                [
+                                    {offset: 0, color: '#a8edea'},
+                                    {offset: 0.5, color: '#fed6e3'},
+                                ] //数组, 用于配置颜色的渐变过程. 每一项为一个对象, 包含offset和color两个参数. offset的范围是0 ~ 1, 用于表示柱状图的位置
+                            )
+                        }
+                    }
+                }
+            ]
+        }
+        return option
+    }
+    const [show,setShow] = useState(false)
     const previewphoto = ()=>{
         console.log(11111)
-        fetch('/tmp/test_src/类别分析.png')
-            .then(response => response.blob())
-            .then(blob => {
-                // 将获取的图片数据设置为<img>标签的src属性
-                const img = document.getElementById('preview-image');
-                setSrc(URL.createObjectURL(blob))
-         })
+        // 请求数据，绘制图像
+        fetch('/download')
+        .then(response => response.json())
+        .then(data => {
+            // 在这里处理接收到的JSON数据
+            console.log(data);
+                const newdata = [
+                {
+                    name:'label0',
+                    value:data[0]
+                },
+                {
+                    name:'label1',
+                    value:data[1]
+                },
+                {
+                    name:'label2',
+                    value:data[2]
+                },
+                {
+                    name:'label3',
+                    value:data[3]
+                },
+                {
+                    name:'label4',
+                    value:data[4]
+                },
+                {
+                    name:'label5',
+                    value:data[5]
+                }
+            ]
+            setDatas(newdata)
+            setShow(true)
+        })
+        .catch(error => {
+            // 处理错误情况
+            console.error('Error:', error);
+        })
     }
+
     return (
         <>
             <div className={"header active"} >
@@ -157,11 +282,11 @@ const Detection:FC = ()=>{
                     </nav>
                 </div>
             </div>
-            <div className="tabs-content" id="blog">
+            <div className="tabs-content" id="blog" style={{minHeight:'100vh'}}>
                     <div className="container">
                         <div className="row">
                             <div className="wrapper" style={{display:'flex'}}>
-                                <div className="col-md-4" style={{width:'30%'}}>
+                                <div className="col-md-4" style={{width:'30%',position:'fixed'}}>
                                     <div className="section-heading">
                                         <h4 style={{marginLeft:'5%'}}>我们的产品</h4>
                                         <div className="line-dec" style={{marginLeft:'5%'}}></div>
@@ -172,7 +297,7 @@ const Detection:FC = ()=>{
                                         </ul>
                                     </div>
                                 </div>
-                                <div className="col-md-8" style={{width:'60%',margin:'0 5%'}}>
+                                <div className="col-md-8" style={{width:'60%',margin:'0 5% 0 40%',}}>
                                     <section id="first-tab-group" className="tabgroup">
                                         <div id="tab1" style={check1?{display:''}:{display:'none'}}>
                                             <div className="text-content">
@@ -184,9 +309,9 @@ const Detection:FC = ()=>{
                                                     </p>
                                                     <p className="ant-upload-text">点击或拖拽上传文件并训练</p>
                                                 </Dragger>
-                                                <div style={istrained?{display:'flex'}:{display:'none'}}>
+                                                {/* <div style={istrained?{display:'flex'}:{display:'none'}}>
                                                     <button className="download" onClick={downloadFile}>点击下载训练模型</button>
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
                                         <div id="tab2" style={check2?{display:''}:{display:'none'}}>
@@ -200,12 +325,15 @@ const Detection:FC = ()=>{
                                                     <p className="ant-upload-text">点击或拖拽上传文件并测试</p>
                                                 </Dragger>
                                                 <div style={istested?{display:'flex'}:{display:'none'}}>
-                                                    <button className="download" onClick={downloadFile2}>点击下载分类结果</button>
+                                                    <button className="download" onClick={downloadFile}>点击下载分类结果</button>
                                                     <button className="download" onClick={previewphoto}>点击查看分类图片</button>
                                                 </div>
-                                                <div>
+                                                {/* <div>
                                                     <img className={src === ""?"hidephoto":"showphoto"} src={src} alt="Preview Image" />
-                                                </div>
+                                                </div> */}
+                                                {/* <div ref={chartRef} style={{ width: '100%', height: '400px' }} /> */}
+                                                <ReactEcharts style={show?{display:'flex',marginTop:'6%'}:{display:'none'}} theme={"light"} option={getOption()}/>
+                                                <ReactEcharts style={show?{display:'flex',marginTop:'6%'}:{display:'none'}} theme={"light"} option={getOptions()}/>
                                             </div>
                                         </div>
                                     </section>
@@ -213,7 +341,7 @@ const Detection:FC = ()=>{
                             </div>
                         </div>
                     </div>
-                </div>
+            </div>
         </>
     )
 }
