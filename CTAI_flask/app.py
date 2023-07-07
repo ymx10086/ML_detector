@@ -19,7 +19,7 @@ app.secret_key = 'secret!'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 werkzeug_logger = rel_log.getLogger('werkzeug')
-werkzeug_logger.setLevel(rel_log.ERROR)
+werkzeug_logger.setLevel(rel_log.DEBUG)
 
 # 解决缓存刷新问题
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = timedelta(seconds=1)
@@ -51,7 +51,7 @@ def upload_file():
     print(request.files)
     file = request.files['file']
     # 将file的文件名修改为process.csv
-    file.filename = 'preprocess_train.csv'
+    file.filename = 'train.csv'
     print(datetime.datetime.now(), file.filename)
     if file and allowed_file(file.filename):
         src_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
@@ -60,18 +60,7 @@ def upload_file():
         csv_path = os.path.join('./tmp/train_data', file.filename)
         print(src_path, csv_path)
 
-        x_train, x_test, y_train, y_test = process()
-        train(x_train, y_train)
-        count = test(x_test, y_test)
-        show(count)
-
-        pid = "类别分析.png"
-        csv_info = "类别分析.csv"
-
         return jsonify({'status': 1,
-                        'image_url': 'http://127.0.0.1:5003/tmp/test_src/' + pid,
-                        'draw_url': 'http://127.0.0.1:5003/tmp/test_src/' + pid,
-                        'csv_info': csv_info
                         })
 
     return jsonify({'status': 0})
@@ -81,7 +70,7 @@ def upload_file2():
     print(request.files)
     file = request.files['file']
     # 将file的文件名修改为process.csv
-    file.filename = 'test_data.csv'
+    file.filename = 'test.csv'
     print(datetime.datetime.now(), file.filename)
     if file and allowed_file(file.filename):
         src_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
@@ -90,17 +79,20 @@ def upload_file2():
         csv_path = os.path.join('./tmp/train_data', file.filename)
         print(src_path, csv_path)
 
-        x_train, x_test, y_train, y_test = process_test()
-        count = predict(x_test)
-        show(count)
+        # x_train, x_test, y_train, y_test = process_test()
+        # count = predict(x_test)
+        # show(count)
+
+        #第一个参数训练集 第二个参数测试集
+        #生成预测结果submit.json
+        #保存模型model.pkl
+        #生成标签分类label.txt
+        test_model('./tmp/train_data/train.csv','./tmp/train_data/test.csv')
 
         pid = "类别分析.png"
         csv_info = "类别分析.csv"
 
         return jsonify({'status': 1,
-                        'image_url': 'http://127.0.0.1:5003/tmp/test_src/' + pid,
-                        'draw_url': 'http://127.0.0.1:5003/tmp/test_src/' + pid,
-                        'csv_info': csv_info
                         })
 
     return jsonify({'status': 0})
@@ -109,13 +101,13 @@ def upload_file2():
 @app.route("/download", methods=['GET'])
 def download_file():
     # 需要知道2个参数, 第1个参数是本地目录的path, 第2个参数是文件名(带扩展名)
-    return send_from_directory('data', 'model_param.pth', as_attachment=True)
+    return send_from_directory('tmp/result', 'label_pre.txt', as_attachment=True)
 
 
 @app.route("/test1", methods=['GET'])
 def download_file1():
     # 需要知道2个参数, 第1个参数是本地目录的path, 第2个参数是文件名(带扩展名)
-    return send_from_directory('data', 'preprocess_train.csv', as_attachment=True)
+    return send_from_directory('tmp/result', 'submit.json', as_attachment=True)
 
 
 # show photo
@@ -139,4 +131,4 @@ if __name__ == '__main__':
     # with app.app_context():
     #     current_app.model = deploy.Predictor(
     #         './core/net/inference_model', use_gpu=True)
-    app.run(host='127.0.0.1', port=5003, debug=True)
+    app.run(host='127.0.0.1', port=3000, debug=True)

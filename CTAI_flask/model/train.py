@@ -1,257 +1,80 @@
-# coding=gbk
-import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
+import pandas as pd
 from xgboost import XGBClassifier
-import os
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SelectFromModel
+from sklearn.impute import KNNImputer
+from scipy.stats import mode
+import json
+import pickle
+from collections import Counter
+
+def preprocess_data(df):
+    if 'sample_id' in df.columns:
+        df = df.drop(['sample_id'], axis=1)
+    keep_features = ['feature'+str(i) for i in [5,6,16,19,22,29,45,55,66,67,90,91,27,71,35,15,2,44,99,33,97,31,11,76,49,37,8,42,10]]                                            
+    df = df[keep_features]
+    df = df.fillna(0)
+    return df
 
 
-def process():
-    df = pd.read_csv('./tmp/train_data/preprocess_train.csv', index_col=None)
-    # 数据标准化
-    features = df.iloc[:, 1:-1]
-    numeric_features = features.dtypes[features.dtypes != 'object'].index
-    features[numeric_features] = features[numeric_features].apply(
-        lambda x: (x - x.mean()) / (x.std())
-    )
-    # 在标准化数据之后，所有均值消失，因此我们可以将缺失值设置为0
-    features[numeric_features] = features[numeric_features].fillna(0)
-    features_labels = pd.concat([features, df[['label']]], axis=1)
-    train_features = pd.concat([df[['sample_id']], features], axis=1)
-    train_label = df[['sample_id', 'label']]
-    df = pd.concat([train_features, train_label[['label']]], axis=1)
-
-    df.to_csv("data.csv")
-
-    target_name = 'label'
-    x = df.drop(['sample_id', 'label'], axis=1)
-    y = df[['label']]
-    x = np.array(x)
-    y = np.array(y).reshape((-1,))
-
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.05, random_state=123, stratify=y)
-
-    return x_train, x_test, y_train, y_test
-
-def process_test():
-    df = pd.read_csv('./tmp/train_data/test_data.csv', index_col=None)
-    # 数据标准化
-    features = df.iloc[:, 1:-1]
-    numeric_features = features.dtypes[features.dtypes != 'object'].index
-    features[numeric_features] = features[numeric_features].apply(
-        lambda x: (x - x.mean()) / (x.std())
-    )
-    # 在标准化数据之后，所有均值消失，因此我们可以将缺失值设置为0
-    features[numeric_features] = features[numeric_features].fillna(0)
-    features_labels = pd.concat([features, df[['label']]], axis=1)
-    train_features = pd.concat([df[['sample_id']], features], axis=1)
-    train_label = df[['sample_id', 'label']]
-    df = pd.concat([train_features, train_label[['label']]], axis=1)
-
-    df.to_csv("test_data.csv")
-
-    target_name = 'label'
-    x = df.drop(['sample_id', 'label'], axis=1)
-    # y = df[['label']]
-    x = np.array(x)
-    # y = np.array(y).reshape((-1,))
-    y = []
-
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=1, random_state=123, stratify=y)
-
-    return x, y, x, y
-
-def train(x_train, y_train):
-    model = XGBClassifier(learning_rate=0.14)
-    # 保存模型参数
-    model_path = './data/'
-    if not os.path.exists(model_path):
-        os.makedirs(model_path)
+def test_model(train_file,test_file):
+    df_train = pd.read_csv(train_file, index_col=None)
+    df_train.info()
+    x_train = preprocess_data(df_train)
+    y_train = df_train['label']
+    model = RandomForestClassifier()
+    model.fit(x_train, y_train)
+    #保存训练模型
+    with open('tmp/result/model.pkl', 'wb') as f:
+        pickle.dump(model, f)
     
-    model.fit(x_train,
-              y_train)
-    model.save_model(model_path + 'model_param.pth')
-    return model
+    df_validate = pd.read_csv(test_file, index_col=None)
+    df_validate.info()
+    x_test = preprocess_data(df_validate)
 
-def test(x_test, y_test):
-    # 加载模型
-    model_path = './data/'
-    model = XGBClassifier()
-    model.load_model(model_path + 'model_param.pth')
+    # 使用已保存的模型进行预测
+    with open('tmp/result/model.pkl', 'rb') as f:
+        model_pre = pickle.load(f)
+    pred_pre = model_pre.predict(x_test)
 
-    pred = model.predict(x_test)
-    # result_path = 'result/LGBM.txt'
+    # 创建一个字典，其中key为测试样本的sample_id，value为预测的类别
+    pred_dict_pre = {str(id): int(prediction) for id, prediction in zip(df_validate['sample_id'], pred_pre)}
 
-    count = [0, 0, 0, 0, 0, 0]
-    TP = [0, 0, 0, 0, 0, 0]
-    FP = [0, 0, 0, 0, 0, 0]
-    FN = [0, 0, 0, 0, 0, 0]
-    for i in range(len(y_test)):
-        if pred[i] == 0:
-            count[0] += 1
-        if pred[i] == 0 and y_test[i] == 0:
-            TP[0] += 1
-        if pred[i] != 0 and y_test[i] == 0:
-            FN[0] += 1
-        if pred[i] == 0 and y_test[i] != 0:
-            FP[0] += 1
+    # 将字典写入到json文件中
+    with open('tmp/result/pred_pre.json', 'w') as f:
+        json.dump(pred_dict_pre, f)
 
-        if pred[i] == 1:
-            count[1] += 1
-        if pred[i] == 1 and y_test[i] == 1:
-            TP[1] += 1
-        if pred[i] != 1 and y_test[i] == 1:
-            FN[1] += 1
-        if pred[i] == 1 and y_test[i] != 1:
-            FP[1] += 1
+    # 统计每个类别的数量
+    label_counts_pre = Counter(pred_pre)
 
-        if pred[i] == 2:
-            count[2] += 1
-        if pred[i] == 2 and y_test[i] == 2:
-            TP[2] += 1
-        if pred[i] != 2 and y_test[i] == 2:
-            FN[2] += 1
-        if pred[i] == 2 and y_test[i] != 2:
-            FP[2] += 1
+    # 保存每个类别的数量到label_pre.txt文件
+    with open('tmp/result/label_pre.txt', 'w') as f:
+        for label, count in label_counts_pre.items():
+            f.write(f'Label {label}: {count}\n')
 
-        if pred[i] == 3:
-            count[3] += 1
-        if pred[i] == 3 and y_test[i] == 3:
-            TP[3] += 1
-        if pred[i] != 3 and y_test[i] == 3:
-            FN[3] += 1
-        if pred[i] == 3 and y_test[i] != 3:
-            FP[3] += 1
+    predictions = []
 
-        if pred[i] == 4:
-            count[4] += 1
-        if pred[i] == 4 and y_test[i] == 4:
-            TP[4] += 1
-        if pred[i] != 4 and y_test[i] == 4:
-            FN[4] += 1
-        if pred[i] == 4 and y_test[i] != 4:
-            FP[4] += 1
+    # 投票
+    for i in range(20):
+        model = RandomForestClassifier()
+        model.fit(x_train, y_train)
+        pred = model.predict(x_test)
+        predictions.append(pred)
 
-        if pred[i] == 5:
-            count[5] += 1
-        if pred[i] == 5 and y_test[i] == 5:
-            TP[5] += 1
-        if pred[i] != 5 and y_test[i] == 5:
-            FN[5] += 1
-        if pred[i] == 5 and y_test[i] != 5:
-            FP[5] += 1
+    pred = np.array(predictions)
+    final_pred = mode(pred, axis=0)[0] 
+    final_pred = final_pred.ravel()
 
-    Precision = [0, 0, 0, 0, 0, 0]
-    Recall = [0, 0, 0, 0, 0, 0]
+    pred_dict = {str(id): int(prediction) for id, prediction in zip(df_validate['sample_id'], final_pred)}
 
-    Precision[0] = TP[0] / (TP[0] + FP[0])
-    Precision[1] = TP[1] / (TP[1] + FP[1])
-    Precision[2] = TP[2] / (TP[2] + FP[2])
-    Precision[3] = TP[3] / (TP[3] + FP[3])
-    Precision[4] = TP[4] / (TP[4] + FP[4])
-    Precision[5] = TP[5] / (TP[5] + FP[5])
+    with open('tmp/result/submit.json', 'w') as f:
+        json.dump(pred_dict, f)
 
-    for i in range(6):
-        print('Precision: {}\n'.format(Precision[i]))
+    # 统计每个类别的数量
+    label_counts = Counter(final_pred)
 
-    Recall[0] = TP[0] / (TP[0] + FN[0])
-    Recall[1] = TP[1] / (TP[1] + FN[1])
-    Recall[2] = TP[2] / (TP[2] + FN[2])
-    Recall[3] = TP[3] / (TP[3] + FN[3])
-    Recall[4] = TP[4] / (TP[4] + FN[4])
-    Recall[5] = TP[5] / (TP[5] + FN[5])
-
-    for i in range(6):
-        print('Recall: {}\n'.format(Recall[i]))
-
-    Macro_Precision = sum([Precision[0], Precision[1], Precision[2],
-                           Precision[3], Precision[4], Precision[5]]) / 6
-    Macro_Recall = sum([Recall[0], Recall[1], Recall[2],
-                        Recall[3], Recall[4], Recall[5]]) / 6
-    Macro_F1 = 2 * Macro_Precision * Macro_Recall / (Macro_Precision + Macro_Recall)
-    print('Macro_F1: {}\n'.format(Macro_F1))
-
-    # f = open(result_path, 'w', encoding='utf-8')
-    # for i in range(6):
-    #     f.write('类别{}: '.format(i))
-    #     f.write('\n')
-    #     f.write('Precision: {:.2f}%'.format(Precision[i] * 100))
-    #     f.write('\n')
-    #     f.write('Recall: {:.2f}%'.format(Recall[i] * 100))
-    #     f.write('\n')
-
-    # f.write('Macro_F1: {:.2f}'.format(Macro_F1))
-    # f.write('\n')
-
-    # f.close()
-    return count
-
-def predict(x_test):
-    # 加载模型
-    model_path = './data/'
-    model = XGBClassifier()
-    model.load_model(model_path + 'model_param.pth')
-
-    #通过模型进行预测
-    pred = model.predict(x_test)
-
-    count = [0, 0, 0, 0, 0, 0]
-    for i in range(len(pred)):
-        if pred[i] == 0:
-            count[0] += 1
-
-        if pred[i] == 1:
-            count[1] += 1
-
-        if pred[i] == 2:
-            count[2] += 1
-
-        if pred[i] == 3:
-            count[3] += 1
-
-        if pred[i] == 4:
-            count[4] += 1
-
-        if pred[i] == 5:
-            count[5] += 1
-
-    # 将预测结果pred保存到本地的csv文件中
-    # 保存路径为./data/result.csv
-    # 保存格式为csv
-    # 保存内容为pred
-    # 保存时不保存行索引和列索引
-    pd.DataFrame(pred).to_csv('./data/result.csv', header=False, index=False)    
-
-    return count
-
-
-def show(count):
-    plt.rcParams["font.sans-serif"] = ['SimHei']
-    plt.rcParams["axes.unicode_minus"] = False
-
-    for i in range(6):
-        plt.bar(i, count[i])
-
-    plt.title("类别分析")
-    plt.xlabel("类别")
-    plt.ylabel("数量")
-
-    # 打印当前路径
-    print(os.getcwd())
-    # 如果../tmp/test_src文件夹不存在，则创建该文件夹
-
-    if not os.path.exists('./tmp/test_src'):
-        os.mkdir('./tmp/test_src')
-
-    # 保存图片到本地
-    plt.savefig('./tmp/test_src/analysis.png')
-    # plt.show()
-
-
-if __name__ == '__main__':
-    x_train, x_test, y_train, y_test = process()
-    model = train(x_train, y_train)
-    count = test(model, x_test, y_test)
-    show(count)
-
+    # 保存每个类别的数量到label.txt文件
+    with open('tmp/result/label.txt', 'w') as f:
+        for label, count in label_counts.items():
+            f.write(f'Label {label}: {count}\n')

@@ -1,0 +1,17 @@
+{
+    "python.analysis.extraPaths": [
+        "C:\\Users\\hp\\.conda\\pkgs",
+        "C:\\Users\\hp\\.conda\\pkgs\\pytorch-1.12.1-py3.7_cuda11.3_cudnn8_0\\Lib\\site-packages",
+        "C:\\Users\\hp\\.conda\\pkgs\\numpy-base-1.21.5-py37hca35cd5_3\\Lib\\site-packages",
+        "F:\\Anaconda\\Lib\\site-packages",
+        "C:\\Users\\hp\\.conda\\envs\\ame\\Scripts",
+        "c:\\users\\hp\\appdata\\roaming\\python\\python39\\site-packages",
+        "f:\\anaconda\\lib\\site-packages",
+        "f:\\anaconda\\envs\\mindspore\\lib\\site-packages",
+        "F:\\Anaconda\\envs\\assistant\\Lib\\site-packages",
+        "f:\\anaconda\\envs\\isq\\lib\\site-packages",
+        "f:\\anaconda\\envs\\lang\\lib\\site-packages",
+        "f:\\anaconda\\envs\\resume\\lib\\site-packages",
+        "./CTAI_flask/model"
+    ]
+}
