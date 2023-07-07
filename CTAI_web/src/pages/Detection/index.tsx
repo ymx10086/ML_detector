@@ -30,7 +30,7 @@ const Detection:FC = ()=>{
         setCheck1(false)
         setCheck2(true)
     }
-    const [istrained,setIstrained] = useState(false)
+    // const [istrained,setIstrained] = useState(false)
     const props: UploadProps = {
         name: 'file',
         multiple: true,
@@ -40,11 +40,11 @@ const Detection:FC = ()=>{
           if (status !== 'uploading') {
             console.log(info.file, info.fileList)
             message.success(`训练成功!`)
-            setIstrained(true)
+            // setIstrained(true)
           }
           if (status === 'done') {
             message.success(`训练成功!`)
-            setIstrained(true)
+            // setIstrained(true)
           }
         },
         onDrop(e) {
@@ -70,14 +70,14 @@ const Detection:FC = ()=>{
             console.log(info.file, info.fileList)
             message.success(`测试成功!`)
             setIstested(true)
-            setUrl(response.image_url)
+            // setUrl(response.image_url)
           }
           if (status === 'done') {
             message.success(`${info.file.name} file uploaded successfully.`)
             // 处理
             message.success(`测试成功!`)
             setIstested(true)
-            setUrl(response.image_url)
+            // setUrl(response.image_url)
           } 
         },
         onDrop(e) {
@@ -92,31 +92,31 @@ const Detection:FC = ()=>{
             format: (percent) => percent && `${parseFloat(percent.toFixed(2))}%`,
         }
     }
-    const [url,setUrl] = useState("")
+    // const [url,setUrl] = useState("")
+    // const downloadFile = ()=> {
+    //     // 发送GET请求到服务器端下载文件
+    //     // console.log(1)
+    //     fetch('/download')
+    //     .then(response => response.blob())
+    //     .then(blob => {
+    //         // 创建一个临时的URL，用于下载文件
+    //         const url = window.URL.createObjectURL(blob);
+            
+    //         // 创建一个a标签，并设置其href属性为临时URL
+    //         const link = document.createElement('a');
+    //         link.href = url;
+            
+    //         // 设置下载的文件名
+    //         link.download = 'model_param.pth';
+            
+    //         // 模拟点击a标签来触发文件下载
+    //         link.click();
+            
+    //         // 释放临时URL资源
+    //         window.URL.revokeObjectURL(url);
+    //     })
+    // }
     const downloadFile = ()=> {
-        // 发送GET请求到服务器端下载文件
-        // console.log(1)
-        fetch('/download')
-        .then(response => response.blob())
-        .then(blob => {
-            // 创建一个临时的URL，用于下载文件
-            const url = window.URL.createObjectURL(blob);
-            
-            // 创建一个a标签，并设置其href属性为临时URL
-            const link = document.createElement('a');
-            link.href = url;
-            
-            // 设置下载的文件名
-            link.download = 'model_param.pth';
-            
-            // 模拟点击a标签来触发文件下载
-            link.click();
-            
-            // 释放临时URL资源
-            window.URL.revokeObjectURL(url);
-        })
-    }
-    const downloadFile2 = ()=> {
         // 发送GET请求到服务器端下载文件
         // console.log(1)
         fetch('/test1')
@@ -130,7 +130,7 @@ const Detection:FC = ()=>{
             link.href = url;
             
             // 设置下载的文件名
-            link.download = 'model_param.pth';
+            link.download = 'submit.json';
             
             // 模拟点击a标签来触发文件下载
             link.click();
@@ -155,7 +155,7 @@ const Detection:FC = ()=>{
                 orient: 'vertical',
                 top: 20,
                 right: 5,
-                data: ['1','2','3','4','5','6']
+                data: ['label0','label1','label2','label3','label4','label5']
             },
             series : [
                 {
@@ -166,7 +166,7 @@ const Detection:FC = ()=>{
                         normal: {
                             show: true,
                             position: 'insideRight',
-                            formatter: '{c}%'
+                            formatter: '{d}%'
                         }
                     },
                     data:datas,
@@ -186,7 +186,7 @@ const Detection:FC = ()=>{
             },
             xAxis: {
                 type: 'category',
-                data:[1,2,3,4,5,6],
+                data:['label0','label1','label2','label3','label4','label5'],
                 axisTick:{
                     alignWithlabel:true
                 },
@@ -223,48 +223,44 @@ const Detection:FC = ()=>{
     const previewphoto = ()=>{
         console.log(11111)
         // 请求数据，绘制图像
-        // setTimeout(() => {
-        //     const data = [
-        //         {
-        //             name:'1',
-        //             value:20
-        //         },
-        //         {
-        //             name:'2',
-        //             value:30
-        //         },
-        //         {
-        //             name:'3',
-        //             value:40
-        //         },
-        //         {
-        //             name:'4',
-        //             value:50
-        //         },
-        //         {
-        //             name:'5',
-        //             value:50
-        //         },
-        //         {
-        //             name:'6',
-        //             value:50
-        //         }
-        // ]
-        // setDatas(data)
-        // setShow(true)
-        // }, 1000);
-        // axios.get('/xxx')
-        // .then((res)=>{
-        //     // 获得数据
-        //     setShow(true)
-        // })
-        // fetch('/tmp/test_src/类别分析.png')
-        //     .then(response => response.blob())
-        //     .then(blob => {
-        //         // 将获取的图片数据设置为<img>标签的src属性
-        //         const img = document.getElementById('preview-image');
-        //         setSrc(URL.createObjectURL(blob))
-        //  })
+        fetch('/download')
+        .then(response => response.json())
+        .then(data => {
+            // 在这里处理接收到的JSON数据
+            console.log(data);
+                const newdata = [
+                {
+                    name:'label0',
+                    value:data[0]
+                },
+                {
+                    name:'label1',
+                    value:data[1]
+                },
+                {
+                    name:'label2',
+                    value:data[2]
+                },
+                {
+                    name:'label3',
+                    value:data[3]
+                },
+                {
+                    name:'label4',
+                    value:data[4]
+                },
+                {
+                    name:'label5',
+                    value:data[5]
+                }
+            ]
+            setDatas(newdata)
+            setShow(true)
+        })
+        .catch(error => {
+            // 处理错误情况
+            console.error('Error:', error);
+        })
     }
 
     return (
@@ -313,9 +309,9 @@ const Detection:FC = ()=>{
                                                     </p>
                                                     <p className="ant-upload-text">点击或拖拽上传文件并训练</p>
                                                 </Dragger>
-                                                <div style={istrained?{display:'flex'}:{display:'none'}}>
+                                                {/* <div style={istrained?{display:'flex'}:{display:'none'}}>
                                                     <button className="download" onClick={downloadFile}>点击下载训练模型</button>
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
                                         <div id="tab2" style={check2?{display:''}:{display:'none'}}>
@@ -329,7 +325,7 @@ const Detection:FC = ()=>{
                                                     <p className="ant-upload-text">点击或拖拽上传文件并测试</p>
                                                 </Dragger>
                                                 <div style={istested?{display:'flex'}:{display:'none'}}>
-                                                    <button className="download" onClick={downloadFile2}>点击下载分类结果</button>
+                                                    <button className="download" onClick={downloadFile}>点击下载分类结果</button>
                                                     <button className="download" onClick={previewphoto}>点击查看分类图片</button>
                                                 </div>
                                                 {/* <div>
