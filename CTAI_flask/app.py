@@ -100,8 +100,24 @@ def upload_file2():
 
 @app.route("/download", methods=['GET'])
 def download_file():
-    # 需要知道2个参数, 第1个参数是本地目录的path, 第2个参数是文件名(带扩展名)
-    return send_from_directory('tmp/result', 'label_pre.txt', as_attachment=True)
+    # 读取label.txt文件中的内容（在tmp/result/label.txt中），文件内容如下：
+    #Label 4: 336
+    #Label 0: 621
+    #Label 5: 339
+    #Label 1: 171
+    #Label 2: 196
+    #Label 3: 337
+    # 生成一个字典，key为类别，value为数量，返回给前端json
+    # 例如：{"4": 336, "0": 621, "5": 339, "1": 171, "2": 196, "3": 337}
+    with open('tmp/result/label.txt', 'r') as f:
+        label = f.readlines()
+    label_dict = {}
+    for i in label:
+        label_dict[i.split(':')[0].split(' ')[1]] = int(i.split(':')[1].split('\n')[0])
+    print(label_dict)
+    return jsonify(label_dict)
+
+
 
 
 @app.route("/test1", methods=['GET'])
